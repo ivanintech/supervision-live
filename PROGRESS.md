@@ -23,9 +23,10 @@ Registro de sesión, más reciente arriba. Estado verificado, no intenciones.
 - Corregido bug real de API: `sv.ByteTrack` ya no existe en supervision 0.31 → paquete `trackers` (`ByteTrackTracker.update`).
 
 **Siguiente paso**
-- `core-002` (detección + tracker): hace falta una fuente sintética con objetos que COCO detecte;
-  el rectángulo de `test_source.py` no es detectable, así que `detections` será 0 siempre.
-  Candidato: renderizar una silueta/figura tipo persona o usar un vídeo de muestra en bucle.
+- `core-002` (detección + tracker): **detección validada**, tracker validado a medias.
+  `probe_tracking.py` muestra IDs reales (0, 1, 2) pero también `-1` en detecciones no
+  confirmadas; antes `live_cam.py` las pintaba como `person #-1`. Corregido a `(nuevo)`.
+  Pendiente: subir `minimum_consecutive_frames` o filtrar no confirmados antes de anotar.
 
 **Riesgos / bloqueos**
 - `yolo11n.pt` (5,6 MB) está en el repo; se puede versionar o ignorar, decidido no ignorar.

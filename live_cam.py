@@ -188,8 +188,13 @@ def main():
         labels = []
         for i in range(len(detections)):
             cls = names.get(int(detections.class_id[i]), "?")
-            tid = detections.tracker_id[i] if detections.tracker_id is not None else 0
-            labels.append(f"{cls} #{int(tid)}")
+            # tracker_id == -1 => detección aún sin confirmar por el tracker
+            # (minimum_consecutive_frames). No es un ID válido: se etiqueta aparte.
+            tid = None
+            if detections.tracker_id is not None:
+                raw = int(detections.tracker_id[i])
+                tid = raw if raw >= 0 else None
+            labels.append(f"{cls} #{tid}" if tid is not None else f"{cls} (nuevo)")
 
         annotated = frame.copy()
         annotated = box_annotator.annotate(scene=annotated, detections=detections)

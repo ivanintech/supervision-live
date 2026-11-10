@@ -20,6 +20,12 @@ uv pip install --python .venv/bin/python -r requirements.txt
 
 > El proyecto usa su **propio** `.venv`. Antes se apuntaba a `~/.agent-reach-venv`, que **no** tiene `supervision`, `cv2`, `numpy` ni `torch` — fallaba al arrancar.
 
+![Demo: detección y tracking sobre el stream](docs-demo.jpg)
+
+Captura real del pipeline: cajas de YOLO11 con ID de ByteTrack por objeto (`person #4`,
+`person #0`) y detecciones aún sin confirmar marcadas `(nuevo)`. La fuente es un
+generador MJPEG local (`test_source.py`) para poder validar sin cámara.
+
 ## Uso
 
 ```bash
