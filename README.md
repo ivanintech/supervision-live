@@ -6,10 +6,10 @@ Detector + tracker sobre vídeo en directo, con stream anotado servido por HTTP 
 
 ## Requisitos
 
-> Los pesos `yolo11n.pt` (5,4 MB) **no se versionan**: ultralytics los descarga solo la primera vez que ejecutes con el `--model` por defecto.
-
 - Python **3.12**
 - App **IP Webcam** en el móvil (Play Store, gratis) — expone la cámara como MJPEG en `http://<IP-móvil>:8080/video`
+
+Los pesos `yolo11n.pt` (5,4 MB) **no se versionan**: ultralytics los descarga solo en el primer arranque (verificado en clon limpio).
 
 ## Instalación
 

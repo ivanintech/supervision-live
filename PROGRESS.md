@@ -16,7 +16,11 @@ Registro de sesión, más reciente arriba. Estado verificado, no intenciones.
   sintética para quien no tenga el móvil a mano.
 
 **Estado verificado**
-- (a registrar tras ejecutar `./init.sh` en verde)
+- `./init.sh` → **PIPELINE OK, exit 0** (113 FPS, `source_ok: true`).
+- Idempotente: segunda ejecución también verde (106 FPS).
+- Stream sirviendo frames reales: 125 JPEG en 5 s (1,3 MB).
+- **Clon limpio** en `/tmp/clonetest`: `uv venv` + `uv pip install -r requirements.txt` + `./init.sh` → OK (150 FPS, `yolo11n.pt` descargado solo).
+- Corregido bug real de API: `sv.ByteTrack` ya no existe en supervision 0.31 → paquete `trackers` (`ByteTrackTracker.update`).
 
 **Siguiente paso**
 - `core-002` (detección + tracker): hace falta una fuente sintética con objetos que COCO detecte;
