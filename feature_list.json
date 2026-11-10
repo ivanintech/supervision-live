@@ -43,7 +43,7 @@
         "El mismo objeto conserva su tracker_id durante N frames."
       ],
       "evidence": "Verificado: stats devuelve counts {'bus':1,'person':4} y probe_tracking.py muestra tracker_id reales (0,1,2). Captura docs-demo.jpg: cajas 'person #4', 'person #0', 'tie (nuevo)'.",
-      "notes": "Falta fuente sintética con objetos reconocibles por COCO (el rectángulo actual no es detectable)."
+      "notes": "Resuelto 2026-11-10: assets/ (bus.jpg, zidane.jpg) ya contiene objetos COCO. Verificado end-to-end: 114 FPS, counts {'bus':1,'person':3}, track IDs 0-3 estables, captura confirma etiquetas 'bus #0', 'person #1/#2/#3'."
     },
     {
       "id": "api-001",
