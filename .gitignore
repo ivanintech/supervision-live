@@ -6,3 +6,7 @@ __pycache__/
 # Pesos YOLO: 5,4 MB, descargables con `yolo` o desde ultralytics.
 # No se versionan; requirements.txt + el --model de live_cam.py los resuelven.
 yolo11n.pt
+
+# Artefactos de test
+.pytest_cache/
+tests/__pycache__/

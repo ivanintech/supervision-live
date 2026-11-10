@@ -1,47 +1,56 @@
 # Supervision Live
 
-Pipeline de computer vision en tiempo real: **cámara del teléfono (IP Webcam) → YOLO → ByteTrack → stream MJPEG local**.
+**Detección y tracking de objetos en tiempo real sobre vídeo en directo — con un harness que se verifica solo.**
 
-Detector + tracker sobre vídeo en directo, con stream anotado servido por HTTP y métricas en JSON. Sin GPU, sin nube: todo corre en local.
-
-## Requisitos
-
-- Python **3.12**
-- App **IP Webcam** en el móvil (Play Store, gratis) — expone la cámara como MJPEG en `http://<IP-móvil>:8080/video`
-
-Los pesos `yolo11n.pt` (5,4 MB) **no se versionan**: ultralytics los descarga solo en el primer arranque (verificado en clon limpio).
-
-## Instalación
+Un reclutador o un colega clona el repo, mete dos comandos y ve pasar frames anotados. Sin móvil, sin GPU, sin nube, sin credenciales. Y `./init.sh` no dice "ok" por cortesía: comprueba dependencias, sintaxis, tests y que el pipeline sirva frames de verdad — si algo falla, **exit 1**.
 
 ```bash
-uv venv --python 3.12 .venv
-uv pip install --python .venv/bin/python -r requirements.txt
+git clone https://github.com/ivanintech/supervision-live && cd supervision-live
+uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -r requirements.txt
+./init.sh
 ```
 
-> El proyecto usa su **propio** `.venv`. Antes se apuntaba a `~/.agent-reach-venv`, que **no** tiene `supervision`, `cv2`, `numpy` ni `torch` — fallaba al arrancar.
+```
+=== 1/4 entorno ===    deps OK
+=== 2/4 sintaxis ===   sintaxis OK
+=== 3/4 tests ===      3 passed
+=== 4/4 pipeline ===   stats: {"fps": 113.5, "detections": 5, "counts": {"bus": 1, "person": 4}, "source_ok": true}
+PIPELINE OK
+```
 
-![Demo: detección y tracking sobre el stream](docs-demo.jpg)
+![Detección y tracking sobre el stream](docs-demo.jpg)
 
-Captura real del pipeline: cajas de YOLO11 con ID de ByteTrack por objeto (`person #4`,
-`person #0`) y detecciones aún sin confirmar marcadas `(nuevo)`. La fuente es un
-generador MJPEG local (`test_source.py`) para poder validar sin cámara.
+Captura real del pipeline: cajas de YOLO11 con el ID que asigna ByteTrack a cada objeto
+(`person #4`, `person #0`) y detecciones aún sin confirmar marcadas `(nuevo)`.
 
-## Uso
+## Cómo está montado
+
+```
+cámara IP (MJPEG)  →  YOLO11 (ultralytics)  →  ByteTrack (trackers)  →  /video anotado
+                                                                     →  /stats JSON
+```
+
+| Pieza | Qué hace |
+|---|---|
+| `live_cam.py` | Ingesta MJPEG, inferencia, tracking, anotación y servidor HTTP. Reconexión automática. |
+| `test_source.py` | Generador MJPEG de prueba: anima imágenes reales desplazándose, para validar el pipeline sin cámara. |
+| `tests/test_pipeline.py` | Tests de detección, estabilidad de IDs y de la etiqueta de anotación. Corren sin red. |
+| `init.sh` | Verificación completa. `./init.sh` arranca, `./init.sh stop` para. |
+| `feature_list.json` | Estado de cada feature con la **evidencia** que lo respalda. |
+| `PROGRESS.md` | Bitácora de sesión y decisiones con su motivo. |
+| `AGENTS.md` | Contexto para agentes: cómo arrancar, qué está verificado, qué no tocar. |
+
+## Uso con la cámara del móvil
+
+Necesitas la app **IP Webcam** (Play Store, gratis) sirviendo en `http://<IP-móvil>:8080/video`.
 
 ```bash
 # 1. En el móvil: abre IP Webcam → botón rojo "Iniciar servidor"
 # 2. En el PC:
-.venv/bin/python live_cam.py \
-  --source http://192.168.1.15:8080/video \
-  --port 8090 --conf 0.35
+.venv/bin/python live_cam.py --source http://192.168.1.15:8080/video --port 8090 --conf 0.35
 ```
 
-Sin móvil a mano, el pipeline se puede validar contra el generador sintético:
-
-```bash
-.venv/bin/python test_source.py --port 8081 &     # generador MJPEG de prueba
-.venv/bin/python live_cam.py --source http://localhost:8081/video
-```
+Luego abre `http://localhost:8090/video` en el navegador.
 
 | Flag | Defecto | Qué hace |
 |------|---------|----------|
@@ -56,12 +65,20 @@ Sin móvil a mano, el pipeline se puede validar contra el generador sintético:
 
 ## Endpoints
 
-- `http://localhost:8090/video` → MJPEG anotado (boxes + ID de tracking + HUD FPS/conteos)
-- `http://localhost:8090/stats` → JSON `{fps, detections, counts, source_ok, error}`
-- `http://localhost:8090/health` → estado de la fuente
+- `/video` → MJPEG anotado (cajas + ID de tracking + HUD de FPS y conteos)
+- `/stats` → `{fps, detections, counts, source_ok, error}`
+- `/health` → estado de la fuente
 
-## Notas
+## Detalles que costaron encontrar
 
-- Reconexión automática: si el móvil pierde el stream, vuelve a conectar solo (15 frames fallidos → reconecta).
-- CPU por defecto. Con `yolo11n` + 640 px: ~20 FPS.
-- `test_source.py` → generador MJPEG sintético para validar el pipeline sin móvil (no es un test unitario).
+- **`sv.ByteTrack` ya no existe.** A partir de supervision 0.31 el tracker vive en el paquete `trackers` y el método cambió a `ByteTrackTracker.update(detections)`. Con la API antigua el pipeline no arrancaba.
+- **`tracker_id == -1` significa "sin confirmar"**, no un ID válido. Pintarlo tal cual producía etiquetas `person #-1`; ahora se marcan `(nuevo)`. Hay un test de regresión.
+- **Los pesos no se versionan.** `yolo11n.pt` (5,4 MB) lo descarga ultralytics en el primer arranque; verificado en clon limpio.
+- **CPU por defecto.** Con `yolo11n` a 640 px: entre 60 y 150 FPS según carga (el generador de prueba es más rápido que una cámara real).
+
+## Requisitos
+
+- Python **3.12**
+- Linux o macOS (probado en CachyOS). Windows no probado.
+
+Versiones exactas en `requirements.txt`; volcado completo de transitivas en `requirements.lock`.

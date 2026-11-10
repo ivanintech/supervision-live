@@ -27,6 +27,20 @@ from ultralytics import YOLO
 
 GOLD = "#D4AF37"; CYAN = "#26A69A"; ORANGE = "#E65100"
 
+
+def format_label(detections, i, names):
+    """Etiqueta de un objeto: `clase #ID` o `clase (nuevo)` si el ID no está confirmado.
+
+    ByteTrack devuelve tracker_id == -1 mientras una detección no alcanza los
+    frames consecutivos exigidos. Pintarlo tal cual producía `person #-1`.
+    """
+    cls = names.get(int(detections.class_id[i]), "?")
+    tid = None
+    if detections.tracker_id is not None:
+        raw = int(detections.tracker_id[i])
+        tid = raw if raw >= 0 else None
+    return f"{cls} #{tid}" if tid is not None else f"{cls} (nuevo)"
+
 # ── Estado compartido (inferencia → HTTP) ──────────────────────────────
 state = {
     "frame": None,          # JPEG anotado listo para servir
@@ -185,16 +199,7 @@ def main():
 
         detections = tracker.update(detections)
 
-        labels = []
-        for i in range(len(detections)):
-            cls = names.get(int(detections.class_id[i]), "?")
-            # tracker_id == -1 => detección aún sin confirmar por el tracker
-            # (minimum_consecutive_frames). No es un ID válido: se etiqueta aparte.
-            tid = None
-            if detections.tracker_id is not None:
-                raw = int(detections.tracker_id[i])
-                tid = raw if raw >= 0 else None
-            labels.append(f"{cls} #{tid}" if tid is not None else f"{cls} (nuevo)")
+        labels = [format_label(detections, i, names) for i in range(len(detections))]
 
         annotated = frame.copy()
         annotated = box_annotator.annotate(scene=annotated, detections=detections)

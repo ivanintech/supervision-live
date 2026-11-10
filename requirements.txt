@@ -1,5 +1,20 @@
-opencv-python-headless>=4.10
-numpy>=1.26
-ultralytics>=8.3
-supervision>=0.31
-trackers>=2.7
+# Dependencias directas del proyecto, con version exacta verificada el 2026-11-10
+# en Python 3.12 (uv). Las transitivas no se fijan a proposito: torch y el stack
+# CUDA los resuelve ultralytics y pesan ~2 GB.
+#
+# Reproducir el entorno:
+#   uv venv --python 3.12 .venv
+#   uv pip install --python .venv/bin/python -r requirements.txt
+#
+# Congelar TODO (incluidas transitivas) si hace falta un lock total:
+#   uv pip freeze --python .venv/bin/python > requirements.lock
+supervision==0.31.6
+trackers==2.7.0
+ultralytics==8.4.208
+opencv-python-headless==5.0.0.93
+numpy==2.5.4
+torch==2.15.0
+torchvision==0.29.2
+
+# Solo para desarrollo (init.sh corre los tests)
+pytest==9.2.0

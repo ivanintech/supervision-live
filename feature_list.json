@@ -1,6 +1,7 @@
 {
   "project": "supervision-live",
   "last_updated": "2026-11-10",
+  "verification_gate": "./init.sh — 4 fases (entorno, sintaxis, tests, pipeline con detecciones>0)",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,

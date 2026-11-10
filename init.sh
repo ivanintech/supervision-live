@@ -24,7 +24,7 @@ if [ "${1:-}" = "stop" ]; then
   exit 0
 fi
 
-echo "=== 1/3 entorno ==="
+echo "=== 1/4 entorno ==="
 if [ -x ./.venv/bin/python ]; then
   "$PY" -c "import cv2, numpy, supervision, ultralytics, trackers; print('deps OK')" || exit 1
 else
@@ -32,10 +32,13 @@ else
   exit 1
 fi
 
-echo "=== 2/3 sintaxis ==="
+echo "=== 2/4 sintaxis ==="
 "$PY" -m compileall -q -x '(^|/)(\.?venv|env|build|dist|__pycache__)(/|$)' . && echo "sintaxis OK" || exit 1
 
-echo "=== 3/3 pipeline (fuente sintética, sin móvil) ==="
+echo "=== 3/4 tests (deteccion + tracker, sin red ni movil) ==="
+"$PY" -m pytest tests/ -q || exit 1
+
+echo "=== 4/4 pipeline (fuente sintética, sin móvil) ==="
 # Puertos ocupados de una ejecución anterior: se liberan por PID del puerto,
 # nunca con `pkill -f <script>` (el cmdline del shell contiene el mismo texto
 # y el script se mataría a sí mismo).
@@ -61,16 +64,20 @@ fi
 setsid -f "$PY" live_cam.py --source "http://127.0.0.1:$SRC_PORT/video" --port $CAM_PORT >/tmp/sl_cam.log 2>&1
 
 OUT=""
-for _ in $(seq 1 25); do
+DETECT=0
+for _ in $(seq 1 30); do
   sleep 2
   OUT=$(curl -s --max-time 3 "http://127.0.0.1:$CAM_PORT/stats" 2>/dev/null || true)
-  echo "$OUT" | grep -q '"source_ok": true' && break
+  # "detections": >0 — la vista instantánea puede caer entre escenas (0 objetos);
+  # se espera a un frame que sí tenga detecciones, no basta con source_ok.
+  echo "$OUT" | grep -qE '"detections": [1-9]' && { DETECT=1; break; }
 done
 
 echo "stats: ${OUT:-sin respuesta}"
-if echo "$OUT" | grep -q '"source_ok": true'; then
-  echo "PIPELINE OK — stream en http://127.0.0.1:$CAM_PORT/video  (para: ./init.sh stop)"
+if [ "$DETECT" = "1" ] && echo "$OUT" | grep -q '"source_ok": true'; then
+  echo "PIPELINE OK — detecciones reales + stream en http://127.0.0.1:$CAM_PORT/video"
+  echo "(para: ./init.sh stop)"
   exit 0
 fi
 echo "--- log live_cam ---"; tail -20 /tmp/sl_cam.log
-echo "PIPELINE FALLO"; exit 1
+echo "PIPELINE FALLO: no se observaron detecciones"; exit 1
