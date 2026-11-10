@@ -1,0 +1,102 @@
+{
+  "project": "supervision-live",
+  "last_updated": "2026-11-10",
+  "rules": {
+    "single_active_feature": true,
+    "passing_requires_evidence": true,
+    "do_not_skip_verification": true
+  },
+  "status_legend": {
+    "not_started": "Work has not begun.",
+    "in_progress": "The feature is the current active task.",
+    "blocked": "Work cannot continue until a documented blocker is resolved.",
+    "passing": "Required verification has passed and evidence is recorded."
+  },
+  "features": [
+    {
+      "id": "core-001",
+      "priority": 1,
+      "area": "core",
+      "title": "Ingesta MJPEG desde IP Webcam con reconexión automática",
+      "user_visible_behavior": "Al abrir /video se ve la cámara del móvil; si el móvil se cae, el stream se recupera solo sin reiniciar el proceso.",
+      "status": "passing",
+      "verification": [
+        "Arrancar test_source.py (sustituto del móvil) y live_cam.py apuntando a él.",
+        "GET /stats devuelve source_ok: true.",
+        "Matar la fuente y comprobar que /health refleja ok:false y que se reconecta al volver."
+      ],
+      "evidence": [
+        "2026-11-10: /stats responde con source_ok=true contra fuente sintética (ver PROGRESS.md)."
+      ],
+      "notes": ""
+    },
+    {
+      "id": "core-002",
+      "priority": 2,
+      "area": "core",
+      "title": "Detección YOLO11 + tracking ByteTrack con IDs estables",
+      "user_visible_behavior": "Cada objeto detectado lleva caja, etiqueta de clase e ID de tracking que se mantiene entre frames.",
+      "status": "not_started",
+      "verification": [
+        "Con fuente sintética con varios objetos, /stats debe reportar detections > 0 y counts no vacío.",
+        "El mismo objeto conserva su tracker_id durante N frames."
+      ],
+      "evidence": [],
+      "notes": "Falta fuente sintética con objetos reconocibles por COCO (el rectángulo actual no es detectable)."
+    },
+    {
+      "id": "api-001",
+      "priority": 3,
+      "area": "api",
+      "title": "Endpoints /video, /stats y /health",
+      "user_visible_behavior": "Los tres endpoints responden con el contrato documentado en el README.",
+      "status": "not_started",
+      "verification": [
+        "GET /stats → JSON con claves fps, detections, counts, source_ok, error.",
+        "GET /health → JSON {ok, error}.",
+        "GET /video → multipart/x-mixed-replace con frames JPEG."
+      ],
+      "evidence": [],
+      "notes": ""
+    },
+    {
+      "id": "config-001",
+      "priority": 4,
+      "area": "config",
+      "title": "Orientación y espejado configurables (--rotate, --flip)",
+      "user_visible_behavior": "La imagen sale derecha con cámaras que entregan el sensor en landscape y con cámara frontal.",
+      "status": "not_started",
+      "verification": [
+        "Arrancar con --rotate 90 y --flip h sobre fuente sintética y comprobar que el frame servido cambia de orientación."
+      ],
+      "evidence": [],
+      "notes": "Argumentos ya implementados en live_cam.py; falta verificación registrada."
+    },
+    {
+      "id": "perf-001",
+      "priority": 5,
+      "area": "perf",
+      "title": "Medición de FPS y HUD en el stream",
+      "user_visible_behavior": "El stream anotado muestra FPS y conteo por clase en la esquina superior.",
+      "status": "not_started",
+      "verification": [
+        "Extraer un frame de /video y comprobar que el texto del HUD aparece."
+      ],
+      "evidence": [],
+      "notes": ""
+    },
+    {
+      "id": "test-001",
+      "priority": 6,
+      "area": "test",
+      "title": "Test de humo automático del pipeline (sin móvil)",
+      "user_visible_behavior": "init.sh devuelve exit 0 solo si el pipeline arranca y produce frames.",
+      "status": "in_progress",
+      "verification": [
+        "./init.sh termina con 'PIPELINE OK' y exit 0."
+      ],
+      "evidence": [],
+      "notes": "init.sh creado 2026-11-10; se marca passing cuando se ejecute en verde."
+    }
+  ]
+}

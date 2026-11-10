@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+*.log
+
+# Pesos YOLO: 5,4 MB, descargables con `yolo` o desde ultralytics.
+# No se versionan; requirements.txt + el --model de live_cam.py los resuelven.
+yolo11n.pt
